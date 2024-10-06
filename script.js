@@ -1,8 +1,7 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
-//import * as THREE from 'three';
-//import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/controls/OrbitControls.js';
+import { OBJLoader } from "./node_modules/three/examples/jsm/loaders/OBJLoader.js";
+import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
+import * as THREE from "./node_modules/three/build/three.module.js";
 
-//console.log(THREE);
 
 // Scene setup
 const scene = new THREE.Scene();
@@ -113,6 +112,13 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// OrbitControls setup
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // Optional damping for smooth orbiting
+controls.dampingFactor = 0.05;
+controls.target.set(0, 1.5, 0); // Set the target to focus on the torus (centered on its position)
+controls.update();
 
 // Animation loop (no rotation for the donut)
 function animate() {
