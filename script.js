@@ -66,6 +66,8 @@ document.addEventListener('mousemove', (event) => {
     // Update the torus rotation based on mouse movement
     torus.rotation.y += deltaMove.x * 0.01; // Adjust the multiplier for sensitivity
     torus.rotation.x += deltaMove.y * 0.01; // Adjust the multiplier for sensitivity
+
+    console.log('moving');
   }
 
   // Update the previous mouse position
