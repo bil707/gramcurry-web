@@ -41,6 +41,40 @@ scene.add(directionalLight);
 const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 0.5);
 scene.add(lightHelper);
 
+// Variables for mouse drag rotation
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+
+// Mouse down event
+document.addEventListener('mousedown', (event) => {
+  isDragging = true;
+});
+
+// Mouse up event
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+// Mouse move event
+document.addEventListener('mousemove', (event) => {
+  if (isDragging) {
+    const deltaMove = {
+      x: event.clientX - previousMousePosition.x,
+      y: event.clientY - previousMousePosition.y,
+    };
+
+    // Update the torus rotation based on mouse movement
+    torus.rotation.y += deltaMove.x * 0.01; // Adjust the multiplier for sensitivity
+    torus.rotation.x += deltaMove.y * 0.01; // Adjust the multiplier for sensitivity
+  }
+
+  // Update the previous mouse position
+  previousMousePosition = {
+    x: event.clientX,
+    y: event.clientY,
+  };
+});
+
 // Keyboard input to move the donut
 document.addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
