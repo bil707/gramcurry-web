@@ -1,5 +1,5 @@
-//import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+//import * as THREE from 'three';
 //import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/controls/OrbitControls.js';
 
 //console.log(THREE);
@@ -67,8 +67,8 @@ document.addEventListener('mousemove', (event) => {
     };
 
     // Update the torus rotation based on mouse movement
-    torus.rotation.y += deltaMove.x * 0.001; // Adjust the multiplier for sensitivity
-    torus.rotation.x += deltaMove.y * 0.001; // Adjust the multiplier for sensitivity
+    torus.rotation.y += deltaMove.x * 0.007; // Adjust the multiplier for sensitivity
+    torus.rotation.x += deltaMove.y * 0.007; // Adjust the multiplier for sensitivity
   }
 
   // Update the previous mouse position
