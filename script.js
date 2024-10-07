@@ -6,7 +6,7 @@ import * as THREE from "./node_modules/three/build/three.module.js";
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 3, 4); // Camera position to see the scene from an angle
-scene.background = new THREE.Color(0xeeeeee);
+scene.background = new THREE.Color('#323232');
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer();
@@ -31,7 +31,7 @@ scene.add(torus);
 
 // Create a plane geometry to act as the floor
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
-const planeMaterial = new THREE.MeshStandardMaterial({ color: '#999999', side: THREE.DoubleSide });
+const planeMaterial = new THREE.MeshStandardMaterial({ color: '#999999', side: THREE.DoubleSide, wireframe: true });
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = -Math.PI / 2; // Rotate the plane to lie horizontally
 plane.receiveShadow = true;
