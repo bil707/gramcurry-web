@@ -1,11 +1,10 @@
-import { OBJLoader } from "./node_modules/three/examples/jsm/loaders/OBJLoader.js";
-import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
 import * as THREE from "./node_modules/three/build/three.module.js";
+import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
 
 // Scene setup
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 3, 4); // Camera position to see the scene from an angle
+camera.position.set(0, 3, 4);
 scene.background = new THREE.Color('#323232');
 
 // Renderer setup
@@ -15,25 +14,25 @@ renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 // Create objects (Torus and Sphere)
-const sphereGeometry = new THREE.SphereGeometry(1, 5, 5);
-const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff6347 });
+const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
+const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff6347, wireframe: true });
 const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-sphere.position.set(3, 1.5, 0); // Position the sphere
+sphere.position.y = 1.5;
 sphere.castShadow = true;
 scene.add(sphere);
 
 const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
 const torusMaterial = new THREE.MeshStandardMaterial({ color: 0xff6347 }); // Tomato color for the donut
 const torus = new THREE.Mesh(torusGeometry, torusMaterial);
-torus.position.y = 1.5;
+torus.position.set(3,1.5,0);
 torus.castShadow = true;
 scene.add(torus);
 
 // Create a plane geometry to act as the floor
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
-const planeMaterial = new THREE.MeshStandardMaterial({ color: '#999999', side: THREE.DoubleSide, wireframe: true });
+const planeMaterial = new THREE.MeshStandardMaterial({ color: '#999999', side: THREE.DoubleSide });
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-plane.rotation.x = -Math.PI / 2; // Rotate the plane to lie horizontally
+plane.rotation.x = -Math.PI / 2;
 plane.receiveShadow = true;
 scene.add(plane);
 
@@ -47,105 +46,92 @@ scene.add(directionalLight);
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let selectedObject = null; // Store the currently selected object
+let isDragging = false;    // Track if the mouse is being dragged for rotation
+let previousMousePosition = { x: 0, y: 0 }; // Track the previous mouse position for rotation
+
+// Create an outline material for highlighting the selected object
+const outlineMaterial = new THREE.MeshBasicMaterial({
+  color: 0xffff00,
+  side: THREE.BackSide // Ensures outline is rendered outside the object
+});
 
 // OrbitControls setup
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.target.set(0, 1.5, 0);
-controls.enabled = false; // Disable initially, only activate with 'Alt' + 'Control'
-
-// Enable orbit controls only when 'Alt' + 'Control' keys are pressed
-let isCtrl = false;
-document.addEventListener('keydown', (event) => {
-    if ( event.ctrlKey ) {
-      isCtrl = true; // Enable orbiting when both keys are pressed
-    }
-});
-  
-document.addEventListener('keyup', (event) => {
-    isCtrl = false; // Disable orbiting when keys are released
-});
+controls.enabled = true;
 
 // Disable pan to avoid conflicts
 controls.enablePan = false;
 
-// Mouse event listeners for object selection and rotation
+// Function to create the glowing outline effect
+function createOutline(originalObject) {
+  const outlineGeometry = originalObject.geometry.clone();
+  const outline = new THREE.Mesh(outlineGeometry, outlineMaterial);
+  outline.position.copy(originalObject.position);
+  outline.rotation.copy(originalObject.rotation);
+  outline.scale.multiplyScalar(1.05); // Scale slightly to create the outline effect
+  return outline;
+}
+
+// Mouse event listener for selecting objects
 document.addEventListener('mousedown', (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-  // Raycast to detect if an object is clicked
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(scene.children);
 
   if (intersects.length > 0) {
-    selectedObject = intersects[0].object; // Select the first intersected object
-    controls.enabled = false; // Disable orbit controls during object manipulation
-  } else {
-    selectedObject = null;
+    const object = intersects[0].object;
+
+    // Remove the old outline if an object was already selected
+    if (selectedObject) {
+      scene.remove(selectedObject.outline); // Remove previous outline
+    }
+
+    // Select the new object
+    selectedObject = object;
+
+    // Add an outline effect by scaling and adding a secondary mesh
+    selectedObject.outline = createOutline(selectedObject);
+    scene.add(selectedObject.outline); // Add the outline to the scene
+
+    // Enable dragging for rotation
+    isDragging = true;
   }
 });
 
-// Variables for mouse drag rotation and button detection
-let isLDragging = false;
-let isRDragging = false;
-let previousMousePosition = { x: 0, y: 0 };
-
+// Mousemove event to rotate the selected object while dragging
 document.addEventListener('mousemove', (event) => {
-  if (!selectedObject) return; // Only rotate if an object is selected
-
-  if(isRDragging) {
-    controls.enabled = true;
-  }
-
-  if (isLDragging) {
+  if (isDragging && selectedObject) {
     const deltaMove = {
       x: event.clientX - previousMousePosition.x,
-      y: event.clientY - previousMousePosition.y,
+      y: event.clientY - previousMousePosition.y
     };
-    
 
     // Rotate the selected object based on mouse movement
-    selectedObject.rotation.y += deltaMove.x * 0.01; // Adjust sensitivity
-    selectedObject.rotation.x += deltaMove.y * 0.01; // Adjust sensitivity
+    selectedObject.rotation.y += deltaMove.x * 0.01; // Adjust sensitivity for Y-axis rotation (horizontal)
+    selectedObject.rotation.x += deltaMove.y * 0.01; // Adjust sensitivity for X-axis rotation (vertical)
+
+    previousMousePosition = {
+      x: event.clientX,
+      y: event.clientY
+    };
   }
-
-  // Update the previous mouse position
-  previousMousePosition = {
-    x: event.clientX,
-    y: event.clientY,
-  };
 });
 
-document.addEventListener('mousedown', (event) => {
-    if (event.button === 2) {
-        isRDragging = true;
-    }
-    if (event.button === 0) {
-        isLDragging = true;
-    }
-});
-
-document.addEventListener('mouseup', (event) => {
-    if (event.button === 2) {
-        isRDragging = false;
-    }
-    if (event.button === 0) {
-        isLDragging = false;
-    }
-});
-
-// Prevent the context menu from opening on right-click
-document.addEventListener('contextmenu', (event) => {
-  event.preventDefault();
+// Stop rotating when the mouse button is released
+document.addEventListener('mouseup', () => {
+  isDragging = false; // Stop dragging when mouse is released
 });
 
 // Camera zoom control with mouse wheel
 document.addEventListener('wheel', (event) => {
   event.preventDefault();
   const zoomAmount = 0.01; // Adjust this for zoom sensitivity
-  camera.position.z += event.deltaY * zoomAmount; // Moves the camera forward/backward
+  camera.position.z += event.deltaY * zoomAmount;
 }, { passive: false });
 
 // Handle window resizing
@@ -158,7 +144,10 @@ window.addEventListener('resize', () => {
 // Animation loop (no rotation for the donut)
 function animate() {
   requestAnimationFrame(animate);
-  camera.lookAt(0,2,0);
+
+  //outline.rotation.copy(originalObject.rotation);
+
+  camera.lookAt(0, 2, 0);
   renderer.render(scene, camera);
 }
 
