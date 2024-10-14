@@ -5,3 +5,30 @@ html, body {
     height: 100%;
     overflow: hidden;
 }
+canvas { display: block; cursor: none;}
+#redDot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background-color: red;
+    border-radius: 50%;
+    pointer-events: none; /* So it doesn't interfere with mouse events */
+    z-index: 100; /* Keep it on top of everything */
+}
+#hud {
+    color: aliceblue;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    padding: 10px;
+    background: rgba(77, 77, 77, 0.8);
+    border-radius: 5px;
+}
+#radiusSlider {
+    width: 200px;
+}
+label {
+    font-family: Arial, sans-serif;
+    margin-right: 10px;
+}
