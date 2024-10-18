@@ -13,7 +13,7 @@
 <script type="module">
   import * as THREE from "./node_modules/three/build/three.module.js";
   import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
-  import { GUI } from "./node_modules/three/examples/jsm/libs/dat.gui.module.js";
+  import { GUI } from './node_modules/three/examples/jsm/libs/dat.gui.module.js';
 
   let scene, camera, renderer, controls, light, gui;
   let human = {};
@@ -78,8 +78,8 @@
 
     // Arms
     const armMaterial = new THREE.MeshStandardMaterial({ color: 0xffaa00 });
-    human.leftArm = createLimb({ x: -1.25, y: 0.75 }, armMaterial);
-    human.rightArm = createLimb({ x: 1.25, y: 0.75 }, armMaterial);
+    human.leftArm = createLimb({ x: -1.25, y: 1.25 }, armMaterial);
+    human.rightArm = createLimb({ x: 1.25, y: 1.25 }, armMaterial);
     torso.add(human.leftArm.group);
     torso.add(human.rightArm.group);
 

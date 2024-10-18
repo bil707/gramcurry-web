@@ -1,20 +1,23 @@
 import * as THREE from "./node_modules/three/build/three.module.js";
 import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
 
-let scene, camera, renderer, sphere, raycaster, mouse, intersectedFace, controls;
+let scene, camera, renderer, object, raycaster, mouse, intersectedFace, controls;
 let isDragging = false;
 let brushSize = 0.1;
-let brushStrength = 0.05;
+let brushStrength = 0.01;
 let push = false;
 let light;
-let sphereRadius = 1; // Sphere radius
-const redDot = document.getElementById('redDot'); // Red dot element
+let shape = 'sphere'; // Start with a sphere
+let objectSize = 1; // Initial size for both sphere and cube
+let currentMode = 'sculpt'; // Default mode is sculpting
 
+const redDot = document.getElementById('redDot');
 const radiusSlider = document.getElementById('radiusSlider');
 const radiusValue = document.getElementById('radiusValue');
+const modeSelect = document.getElementById('modeSelect'); // Mode selector
+const toggleShapeBtn = document.getElementById('toggleShapeBtn'); // Button to toggle shapes
 
 function init() {
-    // Scene setup
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 2.5;
@@ -28,17 +31,14 @@ function init() {
     light.position.copy(camera.position);
     scene.add(light);
 
-    // Initial sphere geometry
-    createSphere(sphereRadius);
+    // Initial geometry creation (default to sphere)
+    createGeometry(shape, objectSize);
 
     // Orbit controls
     controls = new OrbitControls(camera, renderer.domElement);
-    
-    // Customize mouse button behavior for OrbitControls
     controls.mouseButtons = {
-        //LEFT: THREE.MOUSE.PAN,     // Left-click will now pan the camera
-        MIDDLE: THREE.MOUSE.DOLLY,  // Middle mouse scroll for zoom
-        RIGHT: THREE.MOUSE.ROTATE   // Right-click to rotate the camera
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.ROTATE
     };
 
     // Raycaster and mouse
@@ -53,43 +53,74 @@ function init() {
     window.addEventListener('keyup', onKeyUp, false);
     window.addEventListener('resize', onWindowResize, false);
 
-    // Slider change event for sphere radius
+    // Slider event to change the size of the object
     radiusSlider.addEventListener('input', (event) => {
-        const radius = parseFloat(event.target.value);
-        radiusValue.textContent = radius.toFixed(1);
-        updateSphereRadius(radius);
+        const size = parseFloat(event.target.value);
+        radiusValue.textContent = size.toFixed(1);
+        updateObjectSize(size);
+    });
+
+    // Mode selection event
+    modeSelect.addEventListener('change', (event) => {
+        currentMode = event.target.value;
+        handleModeChange();
+    });
+
+    // Toggle shape event (only for manipulating mode)
+    toggleShapeBtn.addEventListener('click', () => {
+        shape = (shape === 'sphere') ? 'cube' : 'sphere';
+        toggleShapeBtn.textContent = (shape === 'sphere') ? 'Switch to Cube' : 'Switch to Sphere';
+        createGeometry(shape, objectSize); // Recreate geometry with the new shape
     });
 
     animate();
 }
 
-function createSphere(radius) {
-    const geometry = new THREE.SphereGeometry(radius, 64, 64);
-    const material = new THREE.MeshStandardMaterial({ color: 0x0077ff, flatShading: true });
-    if (sphere) scene.remove(sphere); // Remove the old sphere if it exists
-    sphere = new THREE.Mesh(geometry, material);
-    scene.add(sphere);
+// Handles mode switching between sculpting and manipulating
+function handleModeChange() {
+    if (currentMode === 'sculpt') {
+        toggleShapeBtn.style.display = 'none'; // Hide shape toggle button
+        radiusSlider.disabled = false; // Enable resizing for sculpting
+    } else if (currentMode === 'manipulate') {
+        toggleShapeBtn.style.display = 'inline-block'; // Show shape toggle button
+        isDragging = false; // Stop any sculpting
+    }
 }
 
-function updateSphereRadius(newRadius) {
-    sphereRadius = newRadius;
-    createSphere(sphereRadius); // Recreate sphere with the new radius
+// Create geometry based on the shape type and size
+function createGeometry(shapeType, size) {
+    if (object) scene.remove(object); // Remove the existing object if it exists
+
+    let geometry;
+    if (shapeType === 'sphere') {
+        geometry = new THREE.SphereGeometry(size, 128, 128);
+    } else if (shapeType === 'cube') {
+        geometry = new THREE.BoxGeometry(size, size, size);
+    }
+
+    const material = new THREE.MeshStandardMaterial({ color: 0x0077ff, flatShading: true });
+    object = new THREE.Mesh(geometry, material);
+    scene.add(object);
+}
+
+// Update the size of the sphere or cube
+function updateObjectSize(newSize) {
+    objectSize = newSize;
+    createGeometry(shape, objectSize); // Recreate object with the new size
 }
 
 function onMouseMove(event) {
     event.preventDefault();
     
-    // Update mouse coordinates for Three.js interactions
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    // Update red dot position
-    redDot.style.left = `${event.clientX - 5}px`; // Adjust for dot size (5px radius)
+    redDot.style.left = `${event.clientX - 5}px`; 
     redDot.style.top = `${event.clientY - 5}px`; 
 
-    if (isDragging) {
+    if (isDragging && currentMode === 'sculpt') {
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObject(sphere);
+        const intersects = raycaster.intersectObject(object);
         if (intersects.length > 0) {
             intersectedFace = intersects[0].face;
             const position = intersects[0].point;
@@ -99,11 +130,10 @@ function onMouseMove(event) {
 }
 
 function onMouseDown(event) {
-    // Only allow sculpting with the left mouse button (event.button === 0)
-    if (event.button !== 0) return;
+    if (event.button !== 0 || currentMode !== 'sculpt') return;
 
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObject(sphere);
+    const intersects = raycaster.intersectObject(object);
     if (intersects.length > 0) {
         isDragging = true;
         intersectedFace = intersects[0].face;
@@ -115,37 +145,33 @@ function onMouseUp() {
 }
 
 function onKeyDown(event) {
-    if (event.key === 'Shift') {
-        push = true; // Hold shift to push vertices
+    if (event.key === 'Shift' && currentMode === 'sculpt') {
+        push = true; 
     }
 }
 
 function onKeyUp(event) {
-    if (event.key === 'Shift') {
-        push = false; // Release shift to pull vertices
+    if (event.key === 'Shift' && currentMode === 'sculpt') {
+        push = false; 
     }
 }
 
 function applySculpting(position) {
-    const vertices = sphere.geometry.attributes.position;
+    const vertices = object.geometry.attributes.position;
     const normal = new THREE.Vector3();
 
-    // Iterate through all vertices and displace them if within brush range
     for (let i = 0; i < vertices.count; i++) {
         const vertex = new THREE.Vector3().fromBufferAttribute(vertices, i);
         if (vertex.distanceTo(position) < brushSize) {
-            // Calculate vertex normal for displacing the vertex
-            sphere.geometry.computeVertexNormals();
-            normal.fromBufferAttribute(sphere.geometry.attributes.normal, i);
+            object.geometry.computeVertexNormals();
+            normal.fromBufferAttribute(object.geometry.attributes.normal, i);
 
-            // Sculpt: push or pull the vertex along its normal
             const direction = push ? -1 : 1;
             vertex.addScaledVector(normal, brushStrength * direction);
             vertices.setXYZ(i, vertex.x, vertex.y, vertex.z);
         }
     }
 
-    // Mark geometry for update
     vertices.needsUpdate = true;
 }
 
@@ -158,11 +184,10 @@ function onWindowResize() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update light to follow the camera's position
     light.position.copy(camera.position);
 
     controls.update();
     renderer.render(scene, camera);
 }
 
-init();
+init(); 
