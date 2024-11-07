@@ -20,6 +20,7 @@
     body {
         font-family: 'Manrope', sans-serif;
         user-select: none;
+        background-color: #404046;
     }
 
     /* Navbar */
@@ -47,7 +48,37 @@
     .navbar li:hover .dropdown-content {
         display: block;
         margin: 0;
-        z-index: 2; /* Ensure dropdown content is above other elements */
+        z-index: 20; /* Ensure dropdown content is above other elements */
+    }
+    .view-type-dropdown {
+      display: flex;
+      flex-direction: column; /* Stack items vertically */
+      align-items: flex-start; /* Align items to the start (left) */
+      gap: 5px; /* Adds space between the text and the select box */
+      position: relative;
+    }
+
+    .view-type-dropdown > span {
+        font-size: small;
+        color: #a3a3af; /* Darker color for 'View Type' text */
+        font-weight: 600;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #5F5F6B;
+    }
+
+    .viewTypeSelect {
+        padding: 5px;
+        font-size: 14px;
+        background-color: #5F5F6B;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 30;
+    }
+
+    .viewTypeSelect:focus {
+        outline: none;
     }
 
     /* Styling for dropdown content */
@@ -63,6 +94,7 @@
         width: auto;
         min-width: 150px;
         box-sizing: border-box;
+        z-index: 10;
     }
     .navbar .dropdown-content li {
         padding: 10px;
@@ -234,11 +266,15 @@
                 <li id="topCameraButton">Top</li>
                 <li id="resetCameraButton">Reset</li>
                 <li class="dropdown view-type-dropdown" id="viewTypeDropdown">
-                    View Type
-                    <ul class="dropdown-subcontent" id="viewTypeDropdownContent">
+                    <span>View Type</span>
+                    <select class="viewTypeSelect">
+                      <option value="0">Perspective</option>
+                      <option value="1">Orthographic</option>
+                    </select>
+                    <!-- <ul class="dropdown-subcontent" id="viewTypeDropdownContent">
                         <li id="perspectiveButton">Perspective</li>
                         <li id="orthographicButton">Orthographic</li>
-                    </ul>
+                    </ul> -->
                 </li>
             </ul>
         </li>
@@ -280,6 +316,10 @@
             <label>Position Z</label>
             <input type="range" min="1" max="10" value="5" class="slider" id="positionZ">
             <input type="text" class="slider-value" id="positionZValue" value="5" readonly>
+        </div>
+        <div class="color-container">
+            <label>Color</label>
+            <input type="color" class="colorPicker" value="#ff0000">
         </div>
     </div>
     <div id="scaleSidebar" style="display: none;">
@@ -539,9 +579,9 @@
       resetGui();
 
       //Event Listeners
-      document.body.addEventListener('mousedown', function(event) {
-        event.preventDefault();
-      });
+        // document.body.addEventListener('mousedown', function(event) {
+        //   event.preventDefault();
+        // });
       document.getElementById('addCubeButton').addEventListener('click', params.addCube);
       document.getElementById('addSphereButton').addEventListener('click', params.addSphere);
       //document.getElementById('deleteButton').addEventListener('click', params.delete);
