@@ -1,16 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Improved 3D Editor</title>
-    <style>
-      body { margin: 0; overflow: hidden; }
-      canvas { display: block; }
-    </style>
-  </head>
-  <body>
-    <script type="module">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Editor UI</title>
+
+<!-- Font link -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+
+<style>
+    /* Reset and basic styling */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'Manrope', sans-serif;
+        user-select: none;
+    }
+
+    /* Navbar */
+    .navbar {
+        background-color: #27272C;
+        color: #BABABA;
+        padding: 10px;
+        z-index: 3;
+        position: fixed;
+        width: 100vw;
+    }
+
+    .navbar ul {
+        list-style: none;
+        display: flex;
+    }
+
+    .navbar li {
+        position: relative;
+        padding: 10px 15px;
+        cursor: pointer;
+    }
+
+    /* Ensure dropdown content appears on hover */
+    .navbar li:hover .dropdown-content {
+        display: block;
+        margin: 0;
+        z-index: 2; /* Ensure dropdown content is above other elements */
+    }
+
+    /* Styling for dropdown content */
+    .navbar .dropdown-content {
+        display: none; /* Hide dropdown by default */
+        position: absolute;
+        top: 100%; /* Position dropdown below the parent item */
+        left: 0;
+        background-color: #444;
+        color: white;
+        list-style: none;
+        padding: 0;
+        width: auto;
+        min-width: 150px;
+        box-sizing: border-box;
+    }
+    .navbar .dropdown-content li {
+        padding: 10px;
+        border-bottom: 1px solid #5F5F6B; /* Thin line between items */
+    }
+
+    /* Hover effect for dropdown items */
+    .navbar .dropdown-content li:hover {
+        background-color: #333; /* Darker background color on hover */
+    }
+
+    /* Ensure subcontent only displays when hovering over 'View Type' or similar */
+    .dropdown-subcontent {
+        display: none; /* Keep it hidden */
+        position: absolute;
+        top: 0;
+        left: 100%; /* Align it to the right of the parent dropdown */
+        background-color: #444;
+        color: white;
+        list-style: none;
+        padding: 0;
+        width: 150px;
+    }
+    .navbar .dropdown:hover .dropdown-subcontent {
+        display: block; /* Show the subcontent when hovering over the parent dropdown */
+    }
+    .navbar .dropdown-about-help .dropdown-content {
+        width: 200px; /* Set a custom width for the "About & Help" dropdown */
+    }
+
+    /* Mode Switch */
+    .mode-switch {
+        position: fixed;
+        top: 62px;
+        margin: 10px;
+        display: flex;
+        gap: 0; /* Remove any space between buttons */
+        z-index: 1;
+    }
+    .mode-switch button {
+        padding: 10px;
+        border: none;
+        cursor: pointer;
+        background-color: #27272C;
+        color: #5F5F6B;
+        font-family: 'Manrope', sans-serif;
+        margin: 0; /* Remove any default margin */
+        border-radius: 0; /* Remove rounded edges on all buttons */
+    }
+
+    /* Add rounded corners to the first and last buttons */
+    .mode-switch button:first-child {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+    }
+    .mode-switch button:last-child {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+
+    /* Add a divider effect between buttons */
+    .mode-switch button + button {
+        border-left: 1px solid #404046; /* Separator between buttons */
+    }
+
+    .mode-switch button.active {
+        background-color: #404046;
+        color: #BABABA;
+    }
+
+    #canvas-container {
+      flex: 1;
+      height: 100vh;
+      width: 80%;
+      z-index: -1;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        right: 0;
+        top: 62px; /* Position it below the navbar */
+        width: 20%;
+        height: calc(100vh - 58px); /* Adjust height to fit below the navbar */
+        background-color: #404046;
+        padding: 20px;
+        overflow-y: auto;
+        color: #BABABA;
+    }
+    .sidebar h3 {
+        margin-bottom: 10px;
+        font-weight: 300;
+        text-align: center; /* Center-align the text */
+        border-bottom: 2px solid #5F5F6B; /* Thin line below the heading */
+        padding-bottom: 5px; /* Add some spacing between the text and the line */
+    }
+    .sidebar .slider-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .sidebar label {
+        flex: 1;
+        font-weight: 300;
+        color: #BABABA;
+    }
+
+    .slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 55%;
+        height: 15px;
+        background: #5F5F6B;
+        border-radius: 3px;
+        outline: none;
+        margin: 0 10px;
+    }
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background-color: #27272C;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background-color: #27272C;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .slider-value {
+        width: 40px;
+        text-align: center;
+        background-color: #27272C;
+        color: #BABABA;
+        border: none;
+        font-family: 'Manrope', sans-serif;
+        font-size: 14px;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar">
+    <ul>
+        <li class="dropdown" id="fileDropdown">
+            File
+            <ul class="dropdown-content" id="fileDropdownContent">
+                <li id="exportButton">Export</li>
+            </ul>
+        </li>
+        <li class="dropdown" id="sceneDropdown">
+            Scene
+            <ul class="dropdown-content" id="sceneDropdownContent">
+                <li id="addSphereButton">Add Sphere</li>
+                <li id="addCubeButton">Add Cube</li>
+                <li><input type="checkbox" id="showGrid" checked> <label for="showGrid">Show Grid</label></li>
+            </ul>
+        </li>
+        <li class="dropdown" id="cameraDropdown">
+            Camera
+            <ul class="dropdown-content" id="cameraDropdownContent">
+                <li id="frontCameraButton">Front</li>
+                <li id="topCameraButton">Top</li>
+                <li id="resetCameraButton">Reset</li>
+                <li class="dropdown view-type-dropdown" id="viewTypeDropdown">
+                    View Type
+                    <ul class="dropdown-subcontent" id="viewTypeDropdownContent">
+                        <li id="perspectiveButton">Perspective</li>
+                        <li id="orthographicButton">Orthographic</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li class="dropdown" id="aboutHelpDropdown">
+            About & Help
+            <ul class="dropdown-content">
+                <li>Email: example@example.com</li>
+                <li>Instagram: @example</li>
+            </ul>
+        </li>        
+    </ul>
+</nav>
+
+<!-- Canvas Container -->
+<div id="canvas-container"></div>
+
+<!-- Mode Switch -->
+<div class="mode-switch">
+    <button id="translateMode" onclick="setMode('translate')">Translate</button>
+    <button id="scaleMode" onclick="setMode('scale')">Scale</button>
+    <button id="rotationMode" onclick="setMode('rotation')">Rotation</button>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div id="translateSidebar">
+        <h3>Translate Options</h3>
+        <div class="slider-container">
+            <label>Position X</label>
+            <input type="range" min="1" max="10" value="5" class="slider" id="positionX">
+            <input type="text" class="slider-value" id="positionXValue" value="5" readonly>
+        </div>
+        <div class="slider-container">
+            <label>Position Y</label>
+            <input type="range" min="1" max="10" value="5" class="slider" id="positionY">
+            <input type="text" class="slider-value" id="positionYValue" value="5" readonly>
+        </div>
+        <div class="slider-container">
+            <label>Position Z</label>
+            <input type="range" min="1" max="10" value="5" class="slider" id="positionZ">
+            <input type="text" class="slider-value" id="positionZValue" value="5" readonly>
+        </div>
+    </div>
+    <div id="scaleSidebar" style="display: none;">
+        <h3>Scale Options</h3>
+        <div class="slider-container">
+            <label>Scale X</label>
+            <input type="range" min="1" max="10" value="5" class="slider" id="scaleX">
+            <input type="text" class="slider-value" id="scaleXValue" value="5" readonly>
+        </div>
+        <div class="slider-container">
+            <label>Scale Y</label>
+            <input type="range" min="1" max="10" value="5" class="slider" id="scaleY">
+            <input type="text" class="slider-value" id="scaleYValue" value="5" readonly>
+        </div>
+        <div class="slider-container">
+            <label>Scale Z</label>
+            <input type="range" min="1" max="10" value="5" class="slider" id="scaleZ">
+            <input type="text" class="slider-value" id="scaleZValue" value="5" readonly>
+        </div>
+    </div>
+    <div id="rotationSidebar" style="display: none;">
+        <h3>Rotation Options</h3>
+        <div class="slider-container">
+            <label>Rotate X</label>
+            <input type="range" min="0" max="360" value="0" class="slider" id="rotateX">
+            <input type="text" class="slider-value" id="rotateXValue" value="0" readonly>
+        </div>
+        <div class="slider-container">
+            <label>Rotate Y</label>
+            <input type="range" min="0" max="360" value="0" class="slider" id="rotateY">
+            <input type="text" class="slider-value" id="rotateYValue" value="0" readonly>
+        </div>
+        <div class="slider-container">
+            <label>Rotate Z</label>
+            <input type="range" min="0" max="360" value="0" class="slider" id="rotateZ">
+            <input type="text" class="slider-value" id="rotateZValue" value="0" readonly>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setMode(mode) {
+        const translateSidebar = document.getElementById("translateSidebar");
+        const scaleSidebar = document.getElementById("scaleSidebar");
+        const rotationSidebar = document.getElementById("rotationSidebar");
+
+        const translateModeButton = document.getElementById("translateMode");
+        const scaleModeButton = document.getElementById("scaleMode");
+        const rotationModeButton = document.getElementById("rotationMode");
+
+        // Reset all sidebar displays and remove active class from all buttons
+        translateSidebar.style.display = "none";
+        scaleSidebar.style.display = "none";
+        rotationSidebar.style.display = "none";
+        translateModeButton.classList.remove("active");
+        scaleModeButton.classList.remove("active");
+        rotationModeButton.classList.remove("active");
+
+        // Set the selected mode's sidebar and button to active
+        if (mode === "scale") {
+            scaleSidebar.style.display = "block";
+            scaleModeButton.classList.add("active");
+        } else if (mode === "rotation") {
+            rotationSidebar.style.display = "block";
+            rotationModeButton.classList.add("active");
+        } else {
+            translateSidebar.style.display = "block";
+            translateModeButton.classList.add("active");
+        }
+    }
+
+    // Initialize to Translate Mode by default
+    setMode("translate");
+
+    // Update slider value displays
+    document.querySelectorAll('.slider').forEach(slider => {
+        const valueDisplay = document.getElementById(slider.id + 'Value');
+        slider.addEventListener('input', () => {
+            valueDisplay.value = slider.value;
+        });
+    });
+</script>
+
+<!-- Three.js -->
+ <script type="module">
       import * as THREE from "./node_modules/three/build/three.module.js";
       import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
       import { TransformControls } from "./node_modules/three/examples/jsm/controls/TransformControls.js";
@@ -21,11 +375,12 @@
       import { RenderPass } from "./node_modules/three/examples/jsm/postprocessing/RenderPass.js";
 
       // Scene, Camera, and Renderer
+      const container = document.getElementById('canvas-container');
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      document.getElementById('canvas-container').appendChild(renderer.domElement);
 
       // Postprocessing setup
       const composer = new EffectComposer(renderer);
@@ -183,6 +538,32 @@
 
       resetGui();
 
+      //Event Listeners
+      document.body.addEventListener('mousedown', function(event) {
+        event.preventDefault();
+      });
+      document.getElementById('addCubeButton').addEventListener('click', params.addCube);
+      document.getElementById('addSphereButton').addEventListener('click', params.addSphere);
+      //document.getElementById('deleteButton').addEventListener('click', params.delete);
+      document.getElementById('topCameraButton').addEventListener('click', params.topView);
+      document.getElementById('frontCameraButton').addEventListener('click', params.frontView);
+      document.getElementById('resetCameraButton').addEventListener('click', params.resetCamera);
+      document.getElementById('exportButton').addEventListener('click', params.exportScene);
+      // Update the grid visibility when the checkbox is toggled
+      document.getElementById('showGrid').addEventListener('change', function() {
+        params.gridVisible = this.checked;
+        params.toggleGrid();  // Update grid visibility based on the checkbox state
+      });
+
+      function setTransformMode(mode) {
+        transformControls.setMode(mode);  // 'translate', 'scale', or 'rotate'
+      }
+
+      // Event listeners for buttons
+      document.getElementById('translateMode').addEventListener('click', () => setTransformMode('translate'));
+      document.getElementById('scaleMode').addEventListener('click', () => setTransformMode('scale'));
+      document.getElementById('rotationMode').addEventListener('click', () => setTransformMode('rotate'));
+
       // GLTF export function
       function exportGLTF(objects) {
         const exporter = new GLTFExporter();
@@ -210,8 +591,8 @@
       // Select object on click
       window.addEventListener('click', (event) => {
         if (event.target.closest('.dg')) return; // Ignore GUI clicks
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        mouse.x = (event.clientX / container.clientWidth) * 2 - 1;
+        mouse.y = -(event.clientY / container.clientHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
         const intersects = raycaster.intersectObjects(objects);
@@ -229,10 +610,13 @@
       });
 
       window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        composer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(width, height);
+        composer.setSize(width, height);
       });
 
       function animate() {
@@ -241,6 +625,6 @@
         composer.render();
       }
       animate();
-    </script>
-  </body>
+ </script>
+</body>
 </html>
