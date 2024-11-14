@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Editor UI</title>
+
+    <!-- Font link -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Basic Styling */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        user-select: none;
+        background-color: #404046;
+      }
+
+      /* Navbar */
+      .navbar {
+        background-color: #27272c;
+        color: #bababa;
+        padding: 10px;
+        position: fixed;
+        width: 100vw;
+        z-index: 3;
+      }
+      .navbar ul {
+        list-style: none;
+        display: flex;
+      }
+      .navbar li {
+        position: relative;
+        padding: 10px 15px;
+        cursor: pointer;
+      }
+      .navbar li:hover .dropdown-content {
+        display: block;
+        z-index: 20;
+      }
+      .navbar .dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: #444;
+        color: white;
+        list-style: none;
+        padding: 0;
+        min-width: 150px;
+        z-index: 10;
+      }
+      .navbar .dropdown-content li {
+        padding: 10px;
+        border-bottom: 1px solid #5f5f6b;
+      }
+      .navbar .dropdown-content li:hover {
+        background-color: #333;
+      }
+
+      /* View Type Dropdown */
+      .view-type-dropdown {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+      .view-type-dropdown > span {
+        font-size: small;
+        color: #a3a3af;
+        font-weight: 600;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #5f5f6b;
+      }
+      .viewTypeSelect {
+        padding: 5px;
+        font-size: 14px;
+        background-color: #5f5f6b;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      /* Mode Switch */
+      .mode-switch {
+        position: fixed;
+        top: 62px;
+        margin: 10px;
+        display: flex;
+        gap: 0;
+        z-index: 1;
+      }
+      .mode-switch button {
+        padding: 10px;
+        border: none;
+        cursor: pointer;
+        background-color: #27272c;
+        color: #5f5f6b;
+        border-radius: 0;
+      }
+      .mode-switch button:first-child {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+      }
+      .mode-switch button:last-child {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+      .mode-switch button.active {
+        background-color: #404046;
+        color: #bababa;
+      }
+
+      /* Canvas and Sidebar */
+      #canvas-container {
+        flex: 1;
+        height: 100vh;
+        width: 80%;
+        z-index: -1;
+      }
+      .sidebar {
+        position: fixed;
+        right: 0;
+        top: 62px;
+        width: 20%;
+        height: calc(100vh - 58px);
+        background-color: #404046;
+        padding: 20px;
+        overflow-y: auto;
+        color: #bababa;
+      }
+      .sidebar h3 {
+        margin-bottom: 10px;
+        font-weight: 300;
+        text-align: center;
+        border-bottom: 2px solid #5f5f6b;
+        padding-bottom: 5px;
+      }
+      .sidebar label {
+        flex: 1; /* Allows the label to take up space on the left */
+        text-align: left; /* Aligns the label to the left */
+        margin-right: 10px; /* Adds space between the label and the slider */
+      }
+      .sidebar .slider-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+      }
+      .slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 55%;
+        height: 15px;
+        background: #5f5f6b;
+        border-radius: 3px;
+        outline: none;
+        margin: 0 10px;
+        margin-right: 10px;
+      }
+      .slider::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+        background-color: #27272c;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .slider-value {
+        width: 40px;
+        text-align: center;
+        background-color: #27272c;
+        color: #bababa;
+        border: none;
+        font-size: 14px;
+        border-radius: 5px;
+        margin-left: auto;
+      }
+
+      /* Color Picker */
+      .color-container {
+        display: flex;
+        align-items: center;
+        margin-right: 185px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+      }
+      .color-container label {
+        font-size: medium;
+        font-weight: 400;
+        color: #a3a3af;
+      }
+      #colorPicker {
+        -webkit-appearance: none;
+        appearance: none;
+        border: none;
+        border-radius: 5px;
+        padding: 3px;
+        cursor: pointer;
+        width: 50px;
+        height: 20px;
+        background-color: #333;
+      }
+      #colorPicker::-webkit-color-swatch {
+        border-radius: 3px; /* Rounded swatch */
+        border: none; /* Remove border */
+      }
+      #colorPicker::-webkit-color-swatch-wrapper {
+        padding: 0; /* Remove default padding */
+      }
+      .undoRedo {
+        display: flex;
+        justify-content: flex-start; /* Aligns buttons to the left; use 'center' or 'flex-end' if needed */
+        gap: 10px; /* Adds space between the buttons */
+        margin-bottom: 20px; /* Adds space below the buttons */
+      }
+      .undo-redo-button {
+        background-color: #27272c; /* Matches your dark theme */
+        color: #bababa; /* Text color for contrast */
+        padding: 8px 16px; /* Button padding for comfort */
+        font-size: 14px; /* Button text size */
+        border-radius: 5px; /* Rounded corners */
+        cursor: pointer; /* Pointer cursor on hover */
+        transition: background-color 0.3s, color 0.3s; /* Smooth hover transition */
+      }
+      .undo-redo-button:hover {
+        background-color: #5f5f6b; /* Lighter background on hover */
+        color: #ffffff; /* White text on hover */
+      }
+      .undo-redo-button:active {
+        background-color: #404046;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-DCBPDrrC.js"></script>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <ul>
+        <li class="dropdown">
+          File
+          <ul class="dropdown-content">
+            <li id="exportButton">Export</li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          Scene
+          <ul class="dropdown-content">
+            <li id="addSphereButton">Add Sphere</li>
+            <li id="addCubeButton">Add Cube</li>
+            <li id="addCylinderButton">Add Cylinder</li>
+            <li>
+              <input type="checkbox" id="showGrid" checked />
+              <label for="showGrid">Show Grid</label>
+            </li>
+            <li id="deleteButton">Delete Object</li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          Camera
+          <ul class="dropdown-content">
+            <li id="frontCameraButton">Front</li>
+            <li id="topCameraButton">Top</li>
+            <li id="resetCameraButton">Reset</li>
+            <li class="view-type-dropdown">
+              <span>View Type</span>
+              <select class="viewTypeSelect">
+                <option value="0">Perspective</option>
+                <option value="1">Orthographic</option>
+              </select>
+            </li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          About & Help
+          <ul class="dropdown-content">
+            <li>Email: example@example.com</li>
+            <li>Instagram: @example</li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Mode Switch -->
+    <div class="mode-switch">
+      <button id="translateMode" onclick="setMode('translate')">
+        Translate
+      </button>
+      <button id="scaleMode" onclick="setMode('scale')">Scale</button>
+      <button id="rotationMode" onclick="setMode('rotation')">Rotation</button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div id="translateSidebar">
+        <h3>Translate Options</h3>
+        <div class="slider-container">
+          <label>Position X</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="0"
+            class="slider"
+            id="positionX"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="positionXValue"
+            value="0"
+            readonly
+          />
+        </div>
+        <div class="slider-container">
+          <label>Position Y</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="0.5"
+            class="slider"
+            id="positionY"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="positionYValue"
+            value="0.5"
+            readonly
+          />
+        </div>
+        <div class="slider-container">
+          <label>Position Z</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="0"
+            class="slider"
+            id="positionZ"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="positionZValue"
+            value="0"
+            readonly
+          />
+        </div>
+      </div>
+
+      <div id="scaleSidebar" style="display: none">
+        <h3>Scale Options</h3>
+        <div class="slider-container">
+          <label>Scale X</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="1"
+            class="slider"
+            id="scaleX"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="scaleXValue"
+            value="1"
+            readonly
+          />
+        </div>
+        <div class="slider-container">
+          <label>Scale Y</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="1"
+            class="slider"
+            id="scaleY"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="scaleYValue"
+            value="1"
+            readonly
+          />
+        </div>
+        <div class="slider-container">
+          <label>Scale Z</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="1"
+            class="slider"
+            id="scaleZ"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="scaleZValue"
+            value="1"
+            readonly
+          />
+        </div>
+      </div>
+
+      <div id="rotationSidebar" style="display: none">
+        <h3>Rotation Options</h3>
+        <div class="slider-container">
+          <label>Rotate X</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value="0"
+            class="slider"
+            id="rotateX"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="rotateXValue"
+            value="0"
+            readonly
+          />
+        </div>
+        <div class="slider-container">
+          <label>Rotate Y</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            value="0"
+            class="slider"
+            id="rotateY"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="rotateYValue"
+            value="0"
+            readonly
+          />
+        </div>
+        <div class="slider-container">
+          <label>Rotate Z</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            value="0"
+            class="slider"
+            id="rotateZ"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="rotateZValue"
+            value="0"
+            readonly
+          />
+        </div>
+      </div>
+      <div class="color-container">
+        <label for="colorPicker">Color:</label>
+        <input type="color" id="colorPicker" value="#ff0000" />
+      </div>
+      <div class="undoRedo">
+        <button class="undo-redo-button" id="undoButton">Undo</button>
+        <button class="undo-redo-button" id="redoButton">Redo</button>
+      </div>
+    </div>
+
+    <script>
+      function setMode(mode) {
+        const translateSidebar = document.getElementById("translateSidebar");
+        const scaleSidebar = document.getElementById("scaleSidebar");
+        const rotationSidebar = document.getElementById("rotationSidebar");
+
+        const translateModeButton = document.getElementById("translateMode");
+        const scaleModeButton = document.getElementById("scaleMode");
+        const rotationModeButton = document.getElementById("rotationMode");
+
+        // Reset all sidebar displays and remove active class from all buttons
+        translateSidebar.style.display = "none";
+        scaleSidebar.style.display = "none";
+        rotationSidebar.style.display = "none";
+        translateModeButton.classList.remove("active");
+        scaleModeButton.classList.remove("active");
+        rotationModeButton.classList.remove("active");
+
+        // Set the selected mode's sidebar and button to active
+        if (mode === "scale") {
+          scaleSidebar.style.display = "block";
+          scaleModeButton.classList.add("active");
+        } else if (mode === "rotation") {
+          rotationSidebar.style.display = "block";
+          rotationModeButton.classList.add("active");
+        } else {
+          translateSidebar.style.display = "block";
+          translateModeButton.classList.add("active");
+        }
+      }
+
+      // Initialize to Translate Mode by default
+      setMode("translate");
+
+      // Update slider value displays
+      document.querySelectorAll(".slider").forEach((slider) => {
+        const valueDisplay = document.getElementById(slider.id + "Value");
+        slider.addEventListener("input", () => {
+          valueDisplay.value = slider.value;
+        });
+      });
+    </script>
+
+    <!-- Three.js -->
+  </body>
+</html>

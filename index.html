@@ -1,367 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Editor UI</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Editor UI</title>
 
-<!-- Font link -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
-
-<style>
-    /* Reset and basic styling */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    body {
-        font-family: 'Manrope', sans-serif;
-        user-select: none;
-        background-color: #404046;
-    }
-
-    /* Navbar */
-    .navbar {
-        background-color: #27272C;
-        color: #BABABA;
-        padding: 10px;
-        z-index: 3;
-        position: fixed;
-        width: 100vw;
-    }
-
-    .navbar ul {
-        list-style: none;
-        display: flex;
-    }
-
-    .navbar li {
-        position: relative;
-        padding: 10px 15px;
-        cursor: pointer;
-    }
-
-    /* Ensure dropdown content appears on hover */
-    .navbar li:hover .dropdown-content {
-        display: block;
-        margin: 0;
-        z-index: 20; /* Ensure dropdown content is above other elements */
-    }
-    .view-type-dropdown {
-      display: flex;
-      flex-direction: column; /* Stack items vertically */
-      align-items: flex-start; /* Align items to the start (left) */
-      gap: 5px; /* Adds space between the text and the select box */
-      position: relative;
-    }
-
-    .view-type-dropdown > span {
-        font-size: small;
-        color: #a3a3af; /* Darker color for 'View Type' text */
-        font-weight: 600;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #5F5F6B;
-    }
-
-    .viewTypeSelect {
-        padding: 5px;
-        font-size: 14px;
-        background-color: #5F5F6B;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        z-index: 30;
-    }
-
-    .viewTypeSelect:focus {
-        outline: none;
-    }
-
-    /* Styling for dropdown content */
-    .navbar .dropdown-content {
-        display: none; /* Hide dropdown by default */
-        position: absolute;
-        top: 100%; /* Position dropdown below the parent item */
-        left: 0;
-        background-color: #444;
-        color: white;
-        list-style: none;
-        padding: 0;
-        width: auto;
-        min-width: 150px;
-        box-sizing: border-box;
-        z-index: 10;
-    }
-    .navbar .dropdown-content li {
-        padding: 10px;
-        border-bottom: 1px solid #5F5F6B; /* Thin line between items */
-    }
-
-    /* Hover effect for dropdown items */
-    .navbar .dropdown-content li:hover {
-        background-color: #333; /* Darker background color on hover */
-    }
-
-    /* Ensure subcontent only displays when hovering over 'View Type' or similar */
-    .dropdown-subcontent {
-        display: none; /* Keep it hidden */
-        position: absolute;
-        top: 0;
-        left: 100%; /* Align it to the right of the parent dropdown */
-        background-color: #444;
-        color: white;
-        list-style: none;
-        padding: 0;
-        width: 150px;
-    }
-    .navbar .dropdown:hover .dropdown-subcontent {
-        display: block; /* Show the subcontent when hovering over the parent dropdown */
-    }
-    .navbar .dropdown-about-help .dropdown-content {
-        width: 200px; /* Set a custom width for the "About & Help" dropdown */
-    }
-
-    /* Mode Switch */
-    .mode-switch {
-        position: fixed;
-        top: 62px;
-        margin: 10px;
-        display: flex;
-        gap: 0; /* Remove any space between buttons */
-        z-index: 1;
-    }
-    .mode-switch button {
-        padding: 10px;
-        border: none;
-        cursor: pointer;
-        background-color: #27272C;
-        color: #5F5F6B;
-        font-family: 'Manrope', sans-serif;
-        margin: 0; /* Remove any default margin */
-        border-radius: 0; /* Remove rounded edges on all buttons */
-    }
-
-    /* Add rounded corners to the first and last buttons */
-    .mode-switch button:first-child {
-        border-top-left-radius: 5px;
-        border-bottom-left-radius: 5px;
-    }
-    .mode-switch button:last-child {
-        border-top-right-radius: 5px;
-        border-bottom-right-radius: 5px;
-    }
-
-    /* Add a divider effect between buttons */
-    .mode-switch button + button {
-        border-left: 1px solid #404046; /* Separator between buttons */
-    }
-
-    .mode-switch button.active {
-        background-color: #404046;
-        color: #BABABA;
-    }
-
-    #canvas-container {
-      flex: 1;
-      height: 100vh;
-      width: 80%;
-      z-index: -1;
-    }
-
-    /* Sidebar */
-    .sidebar {
-        position: fixed;
-        right: 0;
-        top: 62px; /* Position it below the navbar */
-        width: 20%;
-        height: calc(100vh - 58px); /* Adjust height to fit below the navbar */
-        background-color: #404046;
-        padding: 20px;
-        overflow-y: auto;
-        color: #BABABA;
-    }
-    .sidebar h3 {
-        margin-bottom: 10px;
-        font-weight: 300;
-        text-align: center; /* Center-align the text */
-        border-bottom: 2px solid #5F5F6B; /* Thin line below the heading */
-        padding-bottom: 5px; /* Add some spacing between the text and the line */
-    }
-    .sidebar .slider-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    .sidebar label {
-        flex: 1;
-        font-weight: 300;
-        color: #BABABA;
-    }
-
-    .slider {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 55%;
-        height: 15px;
-        background: #5F5F6B;
-        border-radius: 3px;
-        outline: none;
-        margin: 0 10px;
-    }
-    .slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        background-color: #27272C;
-        border-radius: 3px;
-        cursor: pointer;
-    }
-    .slider::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
-        background-color: #27272C;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .slider-value {
-        width: 40px;
-        text-align: center;
-        background-color: #27272C;
-        color: #BABABA;
-        border: none;
-        font-family: 'Manrope', sans-serif;
-        font-size: 14px;
-        border-radius: 5px;
-    }
-</style>
-</head>
-<body>
-<!-- Navbar -->
-<nav class="navbar">
-    <ul>
-        <li class="dropdown" id="fileDropdown">
-            File
-            <ul class="dropdown-content" id="fileDropdownContent">
-                <li id="exportButton">Export</li>
-            </ul>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="./style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- navbar -->
+    <nav class="navbar">
+      <ul>
+        <li class="dropdown">
+          File
+          <ul class="dropdown-content">
+            <li id="exportButton">Export</li>
+          </ul>
         </li>
-        <li class="dropdown" id="sceneDropdown">
-            Scene
-            <ul class="dropdown-content" id="sceneDropdownContent">
-                <li id="addSphereButton">Add Sphere</li>
-                <li id="addCubeButton">Add Cube</li>
-                <li><input type="checkbox" id="showGrid" checked> <label for="showGrid">Show Grid</label></li>
-            </ul>
+        <li class="dropdown">
+          Scene
+          <ul class="dropdown-content">
+            <li id="addSphereButton">Add Sphere</li>
+            <li id="addCubeButton">Add Cube</li>
+            <li id="addCylinderButton">Add Cylinder</li>
+            <li>
+              <input type="checkbox" id="showGrid" checked />
+              <label for="showGrid">Show Grid</label>
+            </li>
+            <li id="deleteButton">Delete Object</li>
+          </ul>
         </li>
-        <li class="dropdown" id="cameraDropdown">
-            Camera
-            <ul class="dropdown-content" id="cameraDropdownContent">
-                <li id="frontCameraButton">Front</li>
-                <li id="topCameraButton">Top</li>
-                <li id="resetCameraButton">Reset</li>
-                <li class="dropdown view-type-dropdown" id="viewTypeDropdown">
-                    <span>View Type</span>
-                    <select class="viewTypeSelect">
-                      <option value="0">Perspective</option>
-                      <option value="1">Orthographic</option>
-                    </select>
-                    <!-- <ul class="dropdown-subcontent" id="viewTypeDropdownContent">
-                        <li id="perspectiveButton">Perspective</li>
-                        <li id="orthographicButton">Orthographic</li>
-                    </ul> -->
-                </li>
-            </ul>
+        <li class="dropdown">
+          Camera
+          <ul class="dropdown-content">
+            <li id="frontCameraButton">Front</li>
+            <li id="topCameraButton">Top</li>
+            <li id="resetCameraButton">Reset</li>
+            <li class="view-type-dropdown">
+              <span>View Type</span>
+              <select class="viewTypeSelect">
+                <option value="0">Perspective</option>
+                <option value="1">Orthographic</option>
+              </select>
+            </li>
+          </ul>
         </li>
-        <li class="dropdown" id="aboutHelpDropdown">
-            About & Help
-            <ul class="dropdown-content">
-                <li>Email: example@example.com</li>
-                <li>Instagram: @example</li>
-            </ul>
-        </li>        
-    </ul>
-</nav>
+        <li class="dropdown">
+          About & Help
+          <ul class="dropdown-content">
+            <li>Email: example@example.com</li>
+            <li>Instagram: @example</li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
 
-<!-- Canvas Container -->
-<div id="canvas-container"></div>
+    <!-- canvas -->
+    <div id="canvas-container"></div>
 
-<!-- Mode Switch -->
-<div class="mode-switch">
-    <button id="translateMode" onclick="setMode('translate')">Translate</button>
-    <button id="scaleMode" onclick="setMode('scale')">Scale</button>
-    <button id="rotationMode" onclick="setMode('rotation')">Rotation</button>
-</div>
+    <!-- mode switch -->
+    <div class="mode-switch">
+      <button id="translateMode" onclick="setMode('translate')">
+        Translate
+      </button>
+      <button id="scaleMode" onclick="setMode('scale')">Scale</button>
+      <button id="rotationMode" onclick="setMode('rotation')">Rotation</button>
+    </div>
 
-<!-- Sidebar -->
-<div class="sidebar">
-    <div id="translateSidebar">
+    <!-- undo redo-->
+    <div class="undoRedo">
+      <button class="undo-redo-button" id="undoButton">Undo</button>
+      <button class="undo-redo-button" id="redoButton">Redo</button>
+    </div>
+
+    <!-- sidebar -->
+    <div class="sidebar">
+      <div id="translateSidebar">
         <h3>Translate Options</h3>
         <div class="slider-container">
-            <label>Position X</label>
-            <input type="range" min="1" max="10" value="5" class="slider" id="positionX">
-            <input type="text" class="slider-value" id="positionXValue" value="5" readonly>
+          <label>Position X</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="0"
+            class="slider"
+            id="positionX"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="positionXValue"
+            value="0"
+            readonly
+          />
         </div>
         <div class="slider-container">
-            <label>Position Y</label>
-            <input type="range" min="1" max="10" value="5" class="slider" id="positionY">
-            <input type="text" class="slider-value" id="positionYValue" value="5" readonly>
+          <label>Position Y</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="0.5"
+            class="slider"
+            id="positionY"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="positionYValue"
+            value="0.5"
+            readonly
+          />
         </div>
         <div class="slider-container">
-            <label>Position Z</label>
-            <input type="range" min="1" max="10" value="5" class="slider" id="positionZ">
-            <input type="text" class="slider-value" id="positionZValue" value="5" readonly>
+          <label>Position Z</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="0"
+            class="slider"
+            id="positionZ"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="positionZValue"
+            value="0"
+            readonly
+          />
         </div>
-        <div class="color-container">
-            <label>Color</label>
-            <input type="color" class="colorPicker" value="#ff0000">
-        </div>
-    </div>
-    <div id="scaleSidebar" style="display: none;">
+      </div>
+
+      <div id="scaleSidebar" style="display: none">
         <h3>Scale Options</h3>
         <div class="slider-container">
-            <label>Scale X</label>
-            <input type="range" min="1" max="10" value="5" class="slider" id="scaleX">
-            <input type="text" class="slider-value" id="scaleXValue" value="5" readonly>
+          <label>Scale X</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="1"
+            class="slider"
+            id="scaleX"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="scaleXValue"
+            value="1"
+            readonly
+          />
         </div>
         <div class="slider-container">
-            <label>Scale Y</label>
-            <input type="range" min="1" max="10" value="5" class="slider" id="scaleY">
-            <input type="text" class="slider-value" id="scaleYValue" value="5" readonly>
+          <label>Scale Y</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="1"
+            class="slider"
+            id="scaleY"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="scaleYValue"
+            value="1"
+            readonly
+          />
         </div>
         <div class="slider-container">
-            <label>Scale Z</label>
-            <input type="range" min="1" max="10" value="5" class="slider" id="scaleZ">
-            <input type="text" class="slider-value" id="scaleZValue" value="5" readonly>
+          <label>Scale Z</label>
+          <input
+            type="range"
+            min="-5"
+            max="5"
+            step="0.1"
+            value="1"
+            class="slider"
+            id="scaleZ"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="scaleZValue"
+            value="1"
+            readonly
+          />
         </div>
-    </div>
-    <div id="rotationSidebar" style="display: none;">
+      </div>
+
+      <div id="rotationSidebar" style="display: none">
         <h3>Rotation Options</h3>
         <div class="slider-container">
-            <label>Rotate X</label>
-            <input type="range" min="0" max="360" value="0" class="slider" id="rotateX">
-            <input type="text" class="slider-value" id="rotateXValue" value="0" readonly>
+          <label>Rotate X</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value="0"
+            class="slider"
+            id="rotateX"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="rotateXValue"
+            value="0"
+            readonly
+          />
         </div>
         <div class="slider-container">
-            <label>Rotate Y</label>
-            <input type="range" min="0" max="360" value="0" class="slider" id="rotateY">
-            <input type="text" class="slider-value" id="rotateYValue" value="0" readonly>
+          <label>Rotate Y</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            value="0"
+            class="slider"
+            id="rotateY"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="rotateYValue"
+            value="0"
+            readonly
+          />
         </div>
         <div class="slider-container">
-            <label>Rotate Z</label>
-            <input type="range" min="0" max="360" value="0" class="slider" id="rotateZ">
-            <input type="text" class="slider-value" id="rotateZValue" value="0" readonly>
+          <label>Rotate Z</label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            value="0"
+            class="slider"
+            id="rotateZ"
+          />
+          <input
+            type="text"
+            class="slider-value"
+            id="rotateZValue"
+            value="0"
+            readonly
+          />
         </div>
+      </div>
+      <div class="color-container">
+        <label for="colorPicker">Color:</label>
+        <input type="color" id="colorPicker" value="#ff0000" />
+      </div>
     </div>
-</div>
 
-<script>
-    function setMode(mode) {
+    <script>
+      function setMode(mode) {
         const translateSidebar = document.getElementById("translateSidebar");
         const scaleSidebar = document.getElementById("scaleSidebar");
         const rotationSidebar = document.getElementById("rotationSidebar");
@@ -380,291 +287,29 @@
 
         // Set the selected mode's sidebar and button to active
         if (mode === "scale") {
-            scaleSidebar.style.display = "block";
-            scaleModeButton.classList.add("active");
+          scaleSidebar.style.display = "block";
+          scaleModeButton.classList.add("active");
         } else if (mode === "rotation") {
-            rotationSidebar.style.display = "block";
-            rotationModeButton.classList.add("active");
+          rotationSidebar.style.display = "block";
+          rotationModeButton.classList.add("active");
         } else {
-            translateSidebar.style.display = "block";
-            translateModeButton.classList.add("active");
+          translateSidebar.style.display = "block";
+          translateModeButton.classList.add("active");
         }
-    }
+      }
 
-    // Initialize to Translate Mode by default
-    setMode("translate");
+      // Initialize to Translate Mode by default
+      setMode("translate");
 
-    // Update slider value displays
-    document.querySelectorAll('.slider').forEach(slider => {
-        const valueDisplay = document.getElementById(slider.id + 'Value');
-        slider.addEventListener('input', () => {
-            valueDisplay.value = slider.value;
+      // Update slider value displays
+      document.querySelectorAll(".slider").forEach((slider) => {
+        const valueDisplay = document.getElementById(slider.id + "Value");
+        slider.addEventListener("input", () => {
+          valueDisplay.value = slider.value;
         });
-    });
-</script>
-
-<!-- Three.js -->
- <script type="module">
-      import * as THREE from "./node_modules/three/build/three.module.js";
-      import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
-      import { TransformControls } from "./node_modules/three/examples/jsm/controls/TransformControls.js";
-      import { GUI } from "./node_modules/three/examples/jsm/libs/dat.gui.module.js";
-      import { GLTFExporter } from "./node_modules/three/examples/jsm/exporters/GLTFExporter.js";
-      import { OutlinePass } from "./node_modules/three/examples/jsm/postprocessing/OutlinePass.js";
-      import { EffectComposer } from "./node_modules/three/examples/jsm/postprocessing/EffectComposer.js";
-      import { RenderPass } from "./node_modules/three/examples/jsm/postprocessing/RenderPass.js";
-
-      // Scene, Camera, and Renderer
-      const container = document.getElementById('canvas-container');
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-      // Postprocessing setup
-      const composer = new EffectComposer(renderer);
-      const renderPass = new RenderPass(scene, camera);
-      composer.addPass(renderPass);
-      
-      // Outline pass with custom parameters for a subtle effect
-      const outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
-      outlinePass.edgeStrength = 2.0;
-      outlinePass.edgeGlow = 0.0;
-      outlinePass.edgeThickness = 0.5;
-      outlinePass.pulsePeriod = 0;
-      outlinePass.visibleEdgeColor.set('#00ff00');
-      outlinePass.hiddenEdgeColor.set('#00ff00');
-      composer.addPass(outlinePass);
-
-      // OrbitControls for camera
-      const controls = new OrbitControls(camera, renderer.domElement);
-      const initialCameraPosition = new THREE.Vector3(0, 2, 5);
-      camera.position.copy(initialCameraPosition);
-      controls.target.set(0, 0, 0);
-      controls.update();
-
-      // Transform Controls
-      const transformControls = new TransformControls(camera, renderer.domElement);
-      scene.add(transformControls);
-      transformControls.addEventListener("dragging-changed", (event) => {
-        controls.enabled = !event.value;
       });
+    </script>
 
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-      scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(5, 5, 5);
-      scene.add(directionalLight);
-
-      // A grid for reference
-      const gridHelper = new THREE.GridHelper(10, 10);
-      scene.add(gridHelper);
-      const objects = []; // Store objects added to the scene
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-
-      // Raycaster for selection
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
-      let selectedObject = null;
-
-      // GUI setup
-      let gui = new GUI();
-      const params = {
-        gridVisible: true,
-        addCube: () => {
-          const cube = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff }));
-          cube.position.set(Math.random() * 4 - 2, 0.5, Math.random() * 4 - 2);
-          scene.add(cube);
-          objects.push(cube);
-        },
-        addSphere: () => {
-          const sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff }));
-          sphere.position.set(Math.random() * 4 - 2, 0.5, Math.random() * 4 - 2);
-          scene.add(sphere);
-          objects.push(sphere);
-        },
-        mode: "translate",
-        toggleGrid: () => {
-          gridHelper.visible = params.gridVisible;
-        },
-        delete: () => {
-          if (selectedObject) {
-            scene.remove(selectedObject);
-            objects.splice(objects.indexOf(selectedObject), 1);
-            selectedObject = null;
-            transformControls.detach();
-            outlinePass.selectedObjects = [];
-            resetGui();
-          }
-        },
-        topView: () => {
-          if (selectedObject) {
-            camera.position.set(selectedObject.position.x, selectedObject.position.y + 5, selectedObject.position.z);
-            camera.lookAt(selectedObject.position);
-            controls.target.copy(selectedObject.position);
-            controls.update();
-          }
-        },
-        frontView: () => {
-          if (selectedObject) {
-            camera.position.set(selectedObject.position.x, selectedObject.position.y, selectedObject.position.z + 5);
-            camera.lookAt(selectedObject.position);
-            controls.target.copy(selectedObject.position);
-            controls.update();
-          }
-        },
-        resetCamera: () => {
-          camera.position.copy(initialCameraPosition);
-          controls.target.set(0, 0, 0);
-          controls.update();
-        },
-        exportScene: () => {
-          exportGLTF(objects);
-        },
-      };
-
-      // Scene Folder in GUI with grid and object creation options
-      function createSceneFolder(gui) {
-        const sceneFolder = gui.addFolder('Scene');
-        sceneFolder.add(params, 'addCube').name('Add Cube');
-        sceneFolder.add(params, 'addSphere').name('Add Sphere');
-        sceneFolder.add(params, 'exportScene').name('Export Scene');
-        sceneFolder.add(params, 'gridVisible').name('Show Grid').onChange(params.toggleGrid);
-        sceneFolder.add(params, 'mode', ['translate', 'rotate', 'scale']).name("Mode").onChange((value) => {
-          transformControls.setMode(value);
-        });
-        sceneFolder.open();
-      }
-
-      function createCameraFolder(gui, isObjectSelected) {
-        const cameraFolder = gui.addFolder("Camera");
-        if (isObjectSelected) {
-          cameraFolder.add(params, 'topView').name('Top View');
-          cameraFolder.add(params, 'frontView').name('Front View');
-        }
-        cameraFolder.add(params, 'resetCamera').name('Reset Camera');
-        cameraFolder.open();
-      }
-
-      function createObjectFolder(gui, object) {
-        const objectFolder = gui.addFolder('Object');
-        objectFolder.addColor({ color: object.material.color.getHex() }, 'color').name('Color').onChange((value) => {
-          object.material.color.set(value);
-        });
-        objectFolder.add(params, 'delete').name('Delete Object');
-        objectFolder.open();
-      }
-
-      // Update GUI based on selection
-      function updateGuiForSelectedObject(object) {
-        if (gui) gui.destroy();
-        gui = new GUI();
-
-        createSceneFolder(gui);
-        createObjectFolder(gui, object);
-        createCameraFolder(gui, true);  // Show camera options for object selection
-      }
-
-      function resetGui() {
-        if (gui) gui.destroy();
-        gui = new GUI();
-
-        createSceneFolder(gui);
-        createCameraFolder(gui, false);  // Basic camera controls
-      }
-
-      resetGui();
-
-      //Event Listeners
-        // document.body.addEventListener('mousedown', function(event) {
-        //   event.preventDefault();
-        // });
-      document.getElementById('addCubeButton').addEventListener('click', params.addCube);
-      document.getElementById('addSphereButton').addEventListener('click', params.addSphere);
-      //document.getElementById('deleteButton').addEventListener('click', params.delete);
-      document.getElementById('topCameraButton').addEventListener('click', params.topView);
-      document.getElementById('frontCameraButton').addEventListener('click', params.frontView);
-      document.getElementById('resetCameraButton').addEventListener('click', params.resetCamera);
-      document.getElementById('exportButton').addEventListener('click', params.exportScene);
-      // Update the grid visibility when the checkbox is toggled
-      document.getElementById('showGrid').addEventListener('change', function() {
-        params.gridVisible = this.checked;
-        params.toggleGrid();  // Update grid visibility based on the checkbox state
-      });
-
-      function setTransformMode(mode) {
-        transformControls.setMode(mode);  // 'translate', 'scale', or 'rotate'
-      }
-
-      // Event listeners for buttons
-      document.getElementById('translateMode').addEventListener('click', () => setTransformMode('translate'));
-      document.getElementById('scaleMode').addEventListener('click', () => setTransformMode('scale'));
-      document.getElementById('rotationMode').addEventListener('click', () => setTransformMode('rotate'));
-
-      // GLTF export function
-      function exportGLTF(objects) {
-        const exporter = new GLTFExporter();
-        const sceneForExport = new THREE.Scene();
-
-        // Only add user-created objects to export scene
-        objects.forEach((obj) => {
-          sceneForExport.add(obj.clone());
-        });
-
-        exporter.parse(sceneForExport, (result) => {
-          const blob = new Blob([result], { type: 'model/gltf-binary' });
-          saveAs(blob, 'scene.glb');
-        }, { binary: true });
-      }
-
-      // Save function to trigger download
-      function saveAs(blob, filename) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-      }
-
-      // Select object on click
-      window.addEventListener('click', (event) => {
-        if (event.target.closest('.dg')) return; // Ignore GUI clicks
-        mouse.x = (event.clientX / container.clientWidth) * 2 - 1;
-        mouse.y = -(event.clientY / container.clientHeight) * 2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-
-        const intersects = raycaster.intersectObjects(objects);
-        if (intersects.length > 0) {
-          selectedObject = intersects[0].object;
-          outlinePass.selectedObjects = [selectedObject];
-          transformControls.attach(selectedObject);
-          updateGuiForSelectedObject(selectedObject);
-        } else {
-          selectedObject = null;
-          outlinePass.selectedObjects = [];
-          transformControls.detach();
-          resetGui();
-        }
-      });
-
-      window.addEventListener('resize', () => {
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-        composer.setSize(width, height);
-      });
-
-      function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        composer.render();
-      }
-      animate();
- </script>
-</body>
+    <script type="module" src="script.js"></script>
+  </body>
 </html>
