@@ -1,5 +1,6 @@
 import * as THREE from "./node_modules/three/build/three.module.js";
 import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js";
 import { TransformControls } from "./node_modules/three/examples/jsm/controls/TransformControls.js";
 import { GUI } from "./node_modules/three/examples/jsm/libs/dat.gui.module.js";
 import { GLTFExporter } from "./node_modules/three/examples/jsm/exporters/GLTFExporter.js";
@@ -65,6 +66,7 @@ scene.add(lightHelper);
 const gridHelper = new THREE.GridHelper(10, 10);
 scene.add(gridHelper);
 const objects = [];
+const gltfLoader = new GLTFLoader();
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
 
@@ -241,23 +243,51 @@ function recordAction(action) {
     }
 }
 
-function createAddAction(object) {
+function createTransformAction(object, oldTransform, newTransform) {
     return {
-        type: "add",
+        type: "transform",
         object: object,
+        oldTransform: { ...oldTransform },
+        newTransform: { ...newTransform },
         execute: () => {
-            scene.add(object);
-            objects.push(object);
+            object.position.copy(newTransform.position);
+            object.rotation.copy(newTransform.rotation);
+            object.scale.copy(newTransform.scale);
         },
         undo: () => {
-            scene.remove(object);
-            const index = objects.indexOf(object);
-            if (index > -1) {
-                objects.splice(index, 1);
-            }
+            object.position.copy(oldTransform.position);
+            object.rotation.copy(oldTransform.rotation);
+            object.scale.copy(oldTransform.scale);
         },
     };
 }
+
+let activeTransform = null;
+
+transformControls.addEventListener("mouseDown", () => {
+    if (selectedObject) {
+        activeTransform = {
+            position: selectedObject.position.clone(),
+            rotation: selectedObject.rotation.clone(),
+            scale: selectedObject.scale.clone(),
+        };
+    }
+});
+
+transformControls.addEventListener("mouseUp", () => {
+    if (selectedObject && activeTransform) {
+        const newTransform = {
+            position: selectedObject.position.clone(),
+            rotation: selectedObject.rotation.clone(),
+            scale: selectedObject.scale.clone(),
+        };
+
+        const action = createTransformAction(selectedObject, activeTransform, newTransform);
+        recordAction(action);
+
+        activeTransform = null;
+    }
+});
 
 function undo() {
     if (undoStack.length > 0) {
@@ -278,6 +308,7 @@ function redo() {
         console.log("No actions to redo");
     }
 }
+
 
 const params = {
     gridVisible: true,
@@ -315,6 +346,7 @@ const params = {
         const action = createAddAction(sphere);
         recordAction(action);
 
+
         updateColorPicker(sphereMaterial.color);
     },
     addCylinder: () => {
@@ -331,10 +363,10 @@ const params = {
         scene.add(cylinder);
         objects.push(cylinder);
 
-        updateColorPicker(cylinderMaterial.color);
-
         const action = createAddAction(cylinder);
         recordAction(action);
+
+        updateColorPicker(cylinderMaterial.color);
     },
     mode: "translate",
     toggleGrid: () => {
@@ -448,18 +480,64 @@ document
 document
     .getElementById("deleteButton")
     .addEventListener("click", params.delete);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Backspace") {
+        params.delete();
+    }
+});
 document
     .getElementById("topCameraButton")
     .addEventListener("click", params.topView);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "t" || event.key === "T") {
+        params.topView();
+    }
+});
 document
     .getElementById("frontCameraButton")
     .addEventListener("click", params.frontView);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "f" || event.key === "F") {
+        params.frontView();
+    }
+});
 document
     .getElementById("resetCameraButton")
     .addEventListener("click", params.resetCamera);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "r" || event.key === "R") {
+        params.resetCamera();
+    }
+});
 document
     .getElementById("exportButton")
     .addEventListener("click", params.exportScene);
+document.getElementById("importButton").addEventListener("click", () => {
+    document.getElementById("fileInput").click();
+});
+document.getElementById("fileInput").addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const arrayBuffer = e.target.result;
+        gltfLoader.parse(arrayBuffer, "", (gltf) => {
+            const importedObject = gltf.scene;
+
+            // Set the scale directly to (1, 1, 1)
+            importedObject.scale.set(1, 1, 1);
+
+            // Add the object to the scene and track it
+            scene.add(importedObject);
+            objects.push(importedObject);
+
+            console.log("Imported .glb file with scale (1, 1, 1):", importedObject);
+        });
+    };
+
+    reader.readAsArrayBuffer(file);
+});
 document
     .getElementById("showGrid")
     .addEventListener("change", function () {

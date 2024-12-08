@@ -21,6 +21,13 @@
           File
           <ul class="dropdown-content">
             <li id="exportButton">Export</li>
+            <li id="importButton">Import</li>
+            <input
+              type="file"
+              id="fileInput"
+              accept=".glb"
+              style="display: none"
+            />
           </ul>
         </li>
         <li class="dropdown">
@@ -30,8 +37,8 @@
             <li id="addCubeButton">Add Cube</li>
             <li id="addCylinderButton">Add Cylinder</li>
             <li>
-              <input type="checkbox" id="showGrid" checked />
               <label for="showGrid">Show Grid</label>
+              <input type="checkbox" id="showGrid" checked />
             </li>
             <li id="deleteButton">Delete Object</li>
           </ul>
@@ -43,7 +50,7 @@
             <li id="topCameraButton">Top</li>
             <li id="resetCameraButton">Reset</li>
             <li class="view-type-dropdown">
-              <span>View Type</span>
+              <span>Projection</span>
               <select class="viewTypeSelect">
                 <option value="0">Perspective</option>
                 <option value="1">Orthographic</option>
@@ -54,8 +61,8 @@
         <li class="dropdown">
           About & Help
           <ul class="dropdown-content">
-            <li>Email: example@example.com</li>
-            <li>Instagram: @example</li>
+            <li>Email: bilguun@example.com</li>
+            <li>Instagram: @bilguun</li>
           </ul>
         </li>
       </ul>
@@ -264,6 +271,15 @@
       <div class="color-container">
         <label for="colorPicker">Color:</label>
         <input type="color" id="colorPicker" value="#ff0000" />
+      </div>
+      <div class="help-section">
+        <h3>Help</h3>
+        <ul>
+          <li><strong>F :</strong> Front View</li>
+          <li><strong>T :</strong> Top View</li>
+          <li><strong>R :</strong> Reset View</li>
+          <li><strong>Backspace :</strong> Delete Object</li>
+        </ul>
       </div>
     </div>
 
